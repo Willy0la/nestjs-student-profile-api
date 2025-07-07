@@ -3,7 +3,7 @@ import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { StudentsProfileModule } from './students-profile/students-profile.module';
 import { ConfigModule, ConfigService } from '@nestjs/config';
-import appConfig from './students-profile/app.config';
+import appConfig from './students-profile/config/app.config';
 import { MongooseModule } from '@nestjs/mongoose';
 
 @Module({

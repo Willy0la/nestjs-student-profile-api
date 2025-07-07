@@ -10,7 +10,7 @@ import {
   SchoolDocument,
   StudentProfileModelName,
 } from './students-profile.entities';
-import mongoose, { Model } from 'mongoose';
+import { Model } from 'mongoose';
 import { UpdateDto } from './dto/update-dto';
 import { CreateDTO } from './dto/create-dto';
 
@@ -25,35 +25,44 @@ export class StudentsProfileService {
     studentLevel?: string;
     department?: string;
     matricNumber?: string;
-  }) {
-    const query: Record<string, any> = {};
+  }): Promise<{ message: string; data: SchoolDocument[] }> {
+    try {
+      const query: Record<string, any> = {};
 
-    if (filter?.department) {
-      query.department = filter.department;
-    }
-    if (filter?.studentLevel) {
-      query.studentLevel = filter.studentLevel;
-    }
+      if (filter?.department) {
+        query.department = filter.department;
+      }
+      if (filter?.studentLevel) {
+        query.studentLevel = filter.studentLevel;
+      }
+      if (filter?.matricNumber) {
+        query.matricNumber = { $regex: filter.matricNumber, $options: 'i' };
+      }
 
-    if (filter?.matricNumber) {
-      query.matricNumber = { $regex: filter.matricNumber, $options: 'i' };
+      const students = await this.studentModel.find(query).exec();
+      return { message: 'Students successfully retrieved', data: students };
+    } catch (error) {
+      if (error instanceof HttpException) {
+        throw error;
+      }
+      console.error('Unable to get students', error);
+      throw new InternalServerErrorException('Unable to get students');
     }
-    const students = await this.studentModel.find(query).exec();
-    return students;
   }
 
-  async getOneStudent(id: string) {
-    if (!mongoose.Types.ObjectId.isValid(id)) {
-      throw new BadRequestException('Bad ID format');
-    }
+  async getOneStudent(
+    id: string,
+  ): Promise<{ message: string; data: SchoolDocument }> {
     const student = await this.studentModel.findById(id).exec();
     if (!student) {
       throw new NotFoundException('Student with ID not found');
     }
-    return student;
+    return { message: 'Student successfully retrieved', data: student };
   }
 
-  async createStudent(createDto: CreateDTO) {
+  async createStudent(
+    createDto: CreateDTO,
+  ): Promise<{ message: string; data: SchoolDocument }> {
     try {
       const student = await this.studentModel
         .findOne({
@@ -66,7 +75,7 @@ export class StudentsProfileService {
         );
       }
       const newStudent = await this.studentModel.create(createDto);
-      return newStudent;
+      return { message: 'Student successfully created', data: newStudent };
     } catch (error) {
       if (error instanceof HttpException) {
         throw error;
@@ -75,27 +84,48 @@ export class StudentsProfileService {
       throw new InternalServerErrorException('Unable to create new student');
     }
   }
-  async updateStudent(updateDto: UpdateDto, id: string) {
+  async updateStudent(
+    updateDto: UpdateDto,
+    id: string,
+  ): Promise<{ message: string; data: SchoolDocument }> {
     try {
-      if (!mongoose.Types.ObjectId.isValid(id)) {
-        throw new BadRequestException('Bad ID format');
-      }
-      const student = await this.studentModel.findById(id).exec();
-      if (!student) {
-        throw new NotFoundException('Student with ID not found');
-      }
       const updateStudent = await this.studentModel.findByIdAndUpdate(
         id,
         updateDto,
         { new: true, runValidators: true },
       );
-      return updateStudent;
+      if (!updateStudent) {
+        throw new NotFoundException('Student with ID not found');
+      }
+      return { message: 'Student successfully updated', data: updateStudent };
     } catch (error) {
       if (error instanceof HttpException) {
         throw error;
       }
       console.error('Unable to update student', error);
       throw new InternalServerErrorException('Unable to update student');
+    }
+  }
+
+  async deleteStudent(
+    id: string,
+  ): Promise<{ message: string; data: SchoolDocument }> {
+    try {
+      const deleteStudent = await this.studentModel.findByIdAndDelete(id);
+
+      if (!deleteStudent) {
+        throw new NotFoundException('Student with ID not found');
+      }
+
+      return {
+        message: 'Student deleted succesfully',
+        data: deleteStudent,
+      };
+    } catch (error) {
+      if (error instanceof HttpException) {
+        throw error;
+      }
+      throw new InternalServerErrorException('Unable to delete student');
     }
   }
 }
