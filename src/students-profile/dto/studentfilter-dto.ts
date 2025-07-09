@@ -1,21 +1,29 @@
 import { IsEnum, IsOptional, IsString } from 'class-validator';
-import {
-  schoolDepartment,
-  schoolLevel,
-  studentDepartment,
-  studentLevel,
-} from '../students-profile.entities';
+import { ApiPropertyOptional } from '@nestjs/swagger';
+import { studentDepartment, studentLevel } from '../students-profile.entities';
+
+type StudentLevel = (typeof studentLevel)[number];
+type StudentDepartment = (typeof studentDepartment)[number];
 
 export class StudentFilterQuery {
+  @ApiPropertyOptional({ description: 'Matriculation number of the student' })
   @IsOptional()
   @IsString()
   matricNumber?: string;
 
+  @ApiPropertyOptional({
+    enum: studentLevel,
+    description: 'Level of the student',
+  })
   @IsOptional()
   @IsEnum(studentLevel)
-  studentLevel?: schoolLevel;
+  level?: StudentLevel;
 
+  @ApiPropertyOptional({
+    enum: studentDepartment,
+    description: 'Department of the student',
+  })
   @IsOptional()
   @IsEnum(studentDepartment)
-  department?: schoolDepartment;
+  department?: StudentDepartment;
 }

@@ -1,25 +1,24 @@
 import { IsEnum, IsNotEmpty, IsString } from 'class-validator';
-import {
-  schoolDepartment,
-  schoolLevel,
-  studentDepartment,
-  studentLevel,
-} from '../students-profile.entities';
-
+import { ApiProperty } from '@nestjs/swagger';
+import { studentDepartment, studentLevel } from '../students-profile.entities';
 export class CreateDTO {
+  @ApiProperty({ example: 'MAT123456' })
   @IsString()
   @IsNotEmpty()
   matricNumber: string;
 
+  @ApiProperty({ example: 'John Doe' })
   @IsString()
   @IsNotEmpty()
   studentName: string;
 
+  @ApiProperty({ example: '100', enum: studentLevel })
   @IsNotEmpty()
   @IsEnum(studentLevel)
-  studentLevel: schoolLevel;
+  studentLevel: keyof typeof studentLevel;
 
+  @ApiProperty({ example: 'SCIENCE', enum: studentDepartment })
   @IsNotEmpty()
   @IsEnum(studentDepartment)
-  department: schoolDepartment;
+  department: keyof typeof studentDepartment;
 }

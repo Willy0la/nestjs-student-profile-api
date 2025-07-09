@@ -8,19 +8,24 @@ import {
   Patch,
   Post,
   Query,
+  ValidationPipe,
 } from '@nestjs/common';
 import { StudentsProfileService } from './students-profile.service';
 import { CreateDTO } from './dto/create-dto';
 import { StudentFilterQuery } from './dto/studentfilter-dto';
 import { UpdateDto } from './dto/update-dto';
 import { ParseObjectIdPipe } from '@nestjs/mongoose';
+import { ApiTags } from '@nestjs/swagger';
 
-@Controller('students-profile')
+@ApiTags('students')
+@Controller('students')
 export class StudentsProfileController {
   constructor(private readonly studentProfile: StudentsProfileService) {}
   @Get('')
   @HttpCode(200)
-  async getStudents(@Query() filter: StudentFilterQuery) {
+  async getStudents(
+    @Query(new ValidationPipe({ transform: true })) filter: StudentFilterQuery,
+  ) {
     return await this.studentProfile.getStudents(filter);
   }
   @Get(':id')
