@@ -5,6 +5,7 @@ import { StudentsProfileModule } from './students-profile/students-profile.modul
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import appConfig from './students-profile/config/app.config';
 import { MongooseModule } from '@nestjs/mongoose';
+import { RedisService } from './redis/redis.service';
 
 @Module({
   imports: [
@@ -23,6 +24,6 @@ import { MongooseModule } from '@nestjs/mongoose';
     }),
   ],
   controllers: [AppController],
-  providers: [AppService],
+  providers: [AppService, RedisService],
 })
 export class AppModule {}

@@ -6,9 +6,11 @@ import {
   SchoolSchema,
   StudentProfileModelName,
 } from './students-profile.entities';
+import { RedisModule } from 'src/redis/redis.module';
 
 @Module({
   imports: [
+    RedisModule,
     MongooseModule.forFeature([
       { name: StudentProfileModelName, schema: SchoolSchema },
     ]),

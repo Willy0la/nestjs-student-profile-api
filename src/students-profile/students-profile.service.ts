@@ -13,12 +13,15 @@ import {
 import { Model } from 'mongoose';
 import { UpdateDto } from './dto/update-dto';
 import { CreateDTO } from './dto/create-dto';
+import { RedisService } from 'src/redis/redis.service';
+import { generateCacheKey } from 'src/cachekey/generateKey';
 
 @Injectable()
 export class StudentsProfileService {
   constructor(
     @InjectModel(StudentProfileModelName)
     private studentModel: Model<SchoolDocument>,
+    private readonly redisService: RedisService,
   ) {}
 
   async getStudents(filter?: {
@@ -52,12 +55,29 @@ export class StudentsProfileService {
 
   async getOneStudent(
     id: string,
-  ): Promise<{ message: string; data: SchoolDocument }> {
+  ): Promise<{ message: string; data: SchoolDocument; key: string }> {
+    const cacheKey = generateCacheKey(id);
+
+    const cached = await this.redisService.getKey<SchoolDocument>(cacheKey);
+    if (cached) {
+      console.log(`✅ Cache HIT for key: ${cacheKey}`);
+      return {
+        message: 'Student retrieved from cache',
+        data: cached,
+        key: cacheKey,
+      };
+    }
+
     const student = await this.studentModel.findById(id).exec();
     if (!student) {
       throw new NotFoundException('Student with ID not found');
     }
-    return { message: 'Student successfully retrieved', data: student };
+    await this.redisService.setKey(cacheKey, student);
+    return {
+      message: 'Student successfully retrieved',
+      data: student,
+      key: cacheKey,
+    };
   }
 
   async createStudent(
@@ -117,8 +137,9 @@ export class StudentsProfileService {
         throw new NotFoundException('Student with ID not found');
       }
 
+      await this.redisService.deleteKey(generateCacheKey(id));
       return {
-        message: 'Student deleted succesfully',
+        message: 'Student deleted successfully',
         data: deleteStudent,
       };
     } catch (error) {
