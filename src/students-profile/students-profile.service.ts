@@ -11,8 +11,8 @@ import {
   StudentProfileModelName,
 } from './students-profile.entities';
 import { Model } from 'mongoose';
-import { UpdateDto } from './dto/update-dto';
-import { CreateDTO } from './dto/create-dto';
+import { UpdateDto } from './profile-dto/update-dto';
+import { CreateDTO } from './profile-dto/create-dto';
 import { RedisService } from 'src/redis/redis.service';
 import { generateCacheKey } from 'src/cachekey/generateKey';
 

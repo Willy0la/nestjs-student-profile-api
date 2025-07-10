@@ -3,9 +3,10 @@ import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { StudentsProfileModule } from './students-profile/students-profile.module';
 import { ConfigModule, ConfigService } from '@nestjs/config';
-import appConfig from './students-profile/config/app.config';
+import appConfig from './config/app.config';
 import { MongooseModule } from '@nestjs/mongoose';
 import { RedisService } from './redis/redis.service';
+import { UsersModule } from './users/users.module';
 
 @Module({
   imports: [
@@ -22,6 +23,7 @@ import { RedisService } from './redis/redis.service';
       },
       inject: [ConfigService],
     }),
+    UsersModule,
   ],
   controllers: [AppController],
   providers: [AppService, RedisService],

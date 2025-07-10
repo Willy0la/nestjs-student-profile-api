@@ -11,9 +11,9 @@ import {
   ValidationPipe,
 } from '@nestjs/common';
 import { StudentsProfileService } from './students-profile.service';
-import { CreateDTO } from './dto/create-dto';
-import { StudentFilterQuery } from './dto/studentfilter-dto';
-import { UpdateDto } from './dto/update-dto';
+import { CreateDTO } from './profile-dto/create-dto';
+import { StudentFilterQuery } from './profile-dto/studentfilter-dto';
+import { UpdateDto } from './profile-dto/update-dto';
 import { ParseObjectIdPipe } from '@nestjs/mongoose';
 import { ApiTags } from '@nestjs/swagger';
 
