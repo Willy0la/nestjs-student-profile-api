@@ -9,22 +9,35 @@ import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
 import { UsersDocument, UsersModelName } from './users.entities';
 import { RedisService } from 'src/redis/redis.service';
-import { RegisterUserDto } from './users-dto/Register-dto';
-import { LoginDto } from 'src/students-profile/profile-dto/login-dto';
+import { LoginDto } from 'src/users/usersDto/login-dto';
+import { UpdateUserDto } from 'src/users/usersDto/updateUserDto';
 import * as bcrypt from 'bcrypt';
+import { generateUserCacheKey } from 'src/cachekey/userKey';
+import { RegisterUserDto } from '../users/usersDto/register-dto';
 
 @Injectable()
 export class UsersService {
   constructor(
     @InjectModel(UsersModelName) private userModel: Model<UsersDocument>,
-    private redis: RedisService,
+    private readonly redisService: RedisService,
   ) {}
   async register(registerUserDto: RegisterUserDto): Promise<{
     data: UsersDocument;
     message: string;
   }> {
     try {
-      const newUser = await this.userModel.create(registerUserDto);
+      const passwordHash = await bcrypt.hash(registerUserDto.password, 10);
+      const newUser = await this.userModel.create({
+        ...registerUserDto,
+        password: passwordHash,
+      });
+
+      // Optional: cache newly registered user
+      const cacheKey = generateUserCacheKey(newUser._id.toString());
+      await this.redisService.setKey(
+        cacheKey,
+        JSON.stringify(newUser.toObject()),
+      );
 
       return {
         data: newUser,
@@ -73,6 +86,81 @@ export class UsersService {
       if (error instanceof Error) {
         console.error(error.message);
         throw new InternalServerErrorException('Unable to Login');
+      }
+      throw new InternalServerErrorException('Unexpected error occurred');
+    }
+  }
+
+  async getAllUsers(): Promise<UsersDocument[]> {
+    try {
+      const users = await this.userModel.find();
+      return users;
+    } catch (error) {
+      if (error instanceof Error) {
+        console.error(error.message);
+        throw new InternalServerErrorException('Unable to retrieve users');
+      }
+      throw new InternalServerErrorException('Unexpected error occurred');
+    }
+  }
+  async getUserById(
+    userId: string,
+  ): Promise<{ message: string; data: UsersDocument; key: string }> {
+    const cacheKey = generateUserCacheKey(userId);
+
+    // 1. Retrieve the cached JSON string
+    const cachedUser = await this.redisService.getKey<string>(cacheKey);
+
+    if (cachedUser) {
+      console.log(`Cache hit for user ID: ${userId}`);
+      // 2. Parse the JSON string back into an object
+      const parsedUser = JSON.parse(cachedUser) as UsersDocument;
+      return {
+        message: 'Student retrieved from cache',
+        data: parsedUser, // <--- Correctly returns the parsed object
+        key: cacheKey,
+      };
+    }
+
+    const user = await this.userModel.findById(userId).exec();
+
+    if (!user) {
+      throw new NotFoundException('User not found');
+    }
+
+    const userPlainObject = user.toObject({ virtuals: true });
+    await this.redisService.setKey(cacheKey, JSON.stringify(userPlainObject));
+
+    return {
+      message: 'User successfully retrieved',
+      data: user,
+      key: cacheKey,
+    };
+  }
+
+  async updateUser(
+    userId: string,
+    updateUserDto: UpdateUserDto,
+  ): Promise<{ data: UsersDocument; message: string }> {
+    try {
+      const updatedUser = await this.userModel.findByIdAndUpdate(
+        userId,
+        updateUserDto,
+        { new: true, runValidators: true },
+      );
+
+      if (!updatedUser) {
+        throw new NotFoundException('User not found');
+      }
+
+      return {
+        data: updatedUser,
+        message: 'User successfully updated',
+      };
+    } catch (error) {
+      if (error instanceof Error) {
+        console.error(error.message);
+        throw new InternalServerErrorException('Unable to update user');
       }
       throw new InternalServerErrorException('Unexpected error occurred');
     }
