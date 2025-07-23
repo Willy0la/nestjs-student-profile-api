@@ -108,16 +108,15 @@ export class UsersService {
   ): Promise<{ message: string; data: UsersDocument; key: string }> {
     const cacheKey = generateUserCacheKey(userId);
 
-    // 1. Retrieve the cached JSON string
     const cachedUser = await this.redisService.getKey<string>(cacheKey);
 
     if (cachedUser) {
       console.log(`Cache hit for user ID: ${userId}`);
-      // 2. Parse the JSON string back into an object
+
       const parsedUser = JSON.parse(cachedUser) as UsersDocument;
       return {
         message: 'Student retrieved from cache',
-        data: parsedUser, // <--- Correctly returns the parsed object
+        data: parsedUser,
         key: cacheKey,
       };
     }

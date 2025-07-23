@@ -11,6 +11,7 @@ async function bootstrap() {
       transform: true,
     }),
   );
+  app.setGlobalPrefix('edu');
 
   const config = new DocumentBuilder()
     .setTitle('Student API')

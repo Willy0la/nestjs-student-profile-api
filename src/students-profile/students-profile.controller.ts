@@ -5,8 +5,8 @@ import {
   Get,
   HttpCode,
   Param,
-  Patch,
   Post,
+  Put,
   Query,
   ValidationPipe,
 } from '@nestjs/common';
@@ -40,7 +40,7 @@ export class StudentsProfileController {
     return await this.studentProfile.createStudent(createDto);
   }
 
-  @Patch(':id')
+  @Put(':id')
   @HttpCode(200)
   async updateStudent(
     @Param('id', new ParseObjectIdPipe()) id: string,

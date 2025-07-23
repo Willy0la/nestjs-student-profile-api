@@ -7,6 +7,8 @@ import appConfig from './config/app.config';
 import { MongooseModule } from '@nestjs/mongoose';
 import { RedisService } from './redis/redis.service';
 import { UsersModule } from './users/users.module';
+import { UsersController } from './users/users.controller';
+import * as joi from 'joi';
 
 @Module({
   imports: [
@@ -14,7 +16,17 @@ import { UsersModule } from './users/users.module';
     ConfigModule.forRoot({
       isGlobal: true,
       load: [appConfig],
-      envFilePath: [`.env/.env.${process.env.NODE_ENV || 'development'}`],
+      envFilePath: [`.local.env`],
+      validationSchema: joi.object({
+        PORT: joi.number().default(3000),
+        DB: joi.string().required(),
+        REDIS_HOST: joi.string().default('localhost'),
+        REDIS_PORT: joi.number().default(6379),
+        NODE_ENV: joi
+          .string()
+          .valid('local', 'development', 'production')
+          .default('local'),
+      }),
     }),
     MongooseModule.forRootAsync({
       imports: [ConfigModule],
@@ -25,7 +37,7 @@ import { UsersModule } from './users/users.module';
     }),
     UsersModule,
   ],
-  controllers: [AppController],
+  controllers: [AppController, UsersController],
   providers: [AppService, RedisService],
 })
 export class AppModule {}
